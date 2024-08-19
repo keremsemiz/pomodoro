@@ -39,6 +39,8 @@ header {
 
 h1 {
     font-size: 2.5rem;
+    text-align: center;
+    margin: 0;
 }
 
 #theme-switcher {
@@ -58,132 +60,41 @@ main {
     gap: 20px;
 }
 
-#task-manager {
+#task-manager, #pomodoro-timer, #pomodoro-history, #analytics-dashboard, #settings {
     background-color: var(--keypad-bg);
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     padding: 15px;
-}
-
-#project-selection {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     margin-bottom: 20px;
+    width: 100%;
 }
 
-#project-select {
-    flex-grow: 1;
-    padding: 10px;
-    border-radius: 4px;
-    border: 1px solid var(--function-key-shadow);
-    background-color: var(--bg-color);
-    color: var(--display-text);
-}
-
-#add-project {
-    padding: 10px;
-    border-radius: 4px;
-    border: none;
-    background-color: var(--function-key-bg);
-    color: var(--function-key-text);
-    cursor: pointer;
-    margin-left: 10px;
-}
-
-#task-list {
-    margin-bottom: 20px;
-}
-
-#task-form {
+#project-selection, #task-form {
     display: flex;
+    flex-direction: column;
     gap: 10px;
 }
 
-#task-name {
-    flex-grow: 1;
+#project-select, #task-name, #task-priority, #add-project, #task-form button {
     padding: 10px;
     border-radius: 4px;
     border: 1px solid var(--function-key-shadow);
     background-color: var(--bg-color);
     color: var(--display-text);
+    width: 100%;
+    box-sizing: border-box;
 }
 
-#task-form button {
-    padding: 10px;
-    border-radius: 4px;
-    border: none;
-    background-color: var(--equals-key-bg);
-    color: var(--equals-key-text);
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-#task-form button:hover {
-    background-color: var(--equals-key-hover);
-}
-
-.task-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    border-radius: 4px;
-    border: 1px solid var(--function-key-shadow);
-    margin-bottom: 10px;
-    background-color: var(--number-key-bg);
-    color: var(--number-key-text);
-}
-
-.task-item span {
-    flex-grow: 1;
-    margin-right: 10px;
-}
-
-.task-item button {
-    padding: 5px 10px;
-    border-radius: 4px;
-    border: none;
-    background-color: var(--function-key-bg);
-    color: var(--function-key-text);
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.task-item .select-task {
-    background-color: var(--equals-key-bg);
-}
-
-.task-item button.edit-task {
-    background-color: var(--function-key-bg);
-    margin-right: 5px;
-}
-
-.task-item button:hover {
-    background-color: var(--function-key-hover);
-}
-
-.task-item .select-task:hover {
-    background-color: var(--equals-key-hover);
-}
-
-#pomodoro-timer {
-    background-color: var(--keypad-bg);
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    padding: 15px;
-    text-align: center;
-}
-
-#timer-display {
-    font-size: 3rem;
-    margin-bottom: 20px;
+#task-list, #history-list, #chart-container {
+    width: 100%;
+    max-width: 100%;
 }
 
 #timer-controls {
     display: flex;
     justify-content: center;
     gap: 10px;
+    flex-wrap: wrap;
 }
 
 #timer-controls button {
@@ -194,23 +105,15 @@ main {
     color: var(--function-key-text);
     cursor: pointer;
     transition: background-color 0.3s ease;
+    width: 100px;
+    flex: 1;
+    text-align: center;
 }
 
-#timer-controls button:hover {
-    background-color: var(--function-key-hover);
-}
-
-#pomodoro-history {
-    background-color: var(--keypad-bg);
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    padding: 15px;
-}
-
-#timer-mode {
-    font-size: 1.2rem;
-    margin-top: 10px;
-    color: var(--display-text);
+#timer-display {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    text-align: center;
 }
 
 .history-item {
@@ -261,26 +164,10 @@ main {
     font-size: 1.1rem;
 }
 
-.history-item span {
-    font-weight: bold;
-    color: var(--equals-key-text);
-}
-
-.history-item div {
-    font-size: 0.9rem;
-    color: var(--number-key-text);
-}
-
-.history-item:last-child {
-    border-bottom: none;
-}
-
-#settings {
-    background-color: var(--keypad-bg);
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    padding: 15px;
-    margin-bottom: 20px;
+#timer-mode {
+    font-size: 1.2rem;
+    margin-top: 10px;
+    color: var(--display-text);
 }
 
 #settings h2 {
@@ -338,7 +225,7 @@ body.break-mode #timer-display {
     --function-key-shadow: hsl(224, 28%, 35%);
     --function-key-text: hsl(0, 100%, 100%);
     --function-key-hover: hsl(224, 51%, 76%);
-    --equals-key-bg: hsl(6, 63%, 50%); 
+    --equals-key-bg: hsl(6, 63%, 50%);
     --equals-key-hover: hsla(6, 93%, 67%, 1);
     --equals-key-shadow: hsl(6, 70%, 34%);
     --equals-key-text: hsl(0, 100%, 100%);
@@ -367,4 +254,24 @@ body.break-mode #timer-display {
     --number-key-shadow: hsl(35, 11%, 61%);
     --number-key-text: hsl(60, 10%, 19%);
     --focus-color: hsl(0, 5%, 81%);
+}
+
+@media (max-width: 600px) {
+    h1 {
+        font-size: 1.8rem;
+    }
+
+    #timer-display {
+        font-size: 2rem;
+    }
+
+    #timer-controls button {
+        padding: 10px;
+        font-size: 1rem;
+        width: auto;
+    }
+
+    #task-manager, #pomodoro-timer, #pomodoro-history, #analytics-dashboard, #settings {
+        padding: 10px;
+    }
 }
