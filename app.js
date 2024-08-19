@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const taskForm = document.getElementById('task-form');
     const taskNameInput = document.getElementById('task-name');
+    const taskPrioritySelect = document.getElementById('task-priority');
     const taskList = document.getElementById('task-list');
     const projectSelect = document.getElementById('project-select');
     const addProjectButton = document.getElementById('add-project');
@@ -13,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const shortBreakDurationInput = document.getElementById('short-break-duration');
     const longBreakDurationInput = document.getElementById('long-break-duration');
     const timerModeDisplay = document.getElementById('timer-mode');
+    const exportCsvButton = document.getElementById('export-csv');
 
     let projects = JSON.parse(localStorage.getItem('projects')) || ['Default Project'];
     let selectedProject = projects[0];
@@ -75,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
     startTimerButton.addEventListener('click', startTimer);
     pauseTimerButton.addEventListener('click', pauseTimer);
     resetTimerButton.addEventListener('click', resetTimer);
+    exportCsvButton.addEventListener('click', exportSessionData);
 
     function addProject(name) {
         projects.push(name);
@@ -96,7 +99,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function addTask(name) {
-        const task = { id: Date.now(), name, project: selectedProject, timeSpent: 0 };
+        const priority = taskPrioritySelect.value;
+        const task = { id: Date.now(), name, project: selectedProject, priority, timeSpent: 0 };
         tasks.push(task);
         saveTasks();
         renderTasks();
@@ -123,10 +127,11 @@ document.addEventListener('DOMContentLoaded', () => {
         taskList.innerHTML = '';
         tasks
             .filter(task => task.project === selectedProject)
+            .sort((a, b) => priorityToValue(b.priority) - priorityToValue(a.priority))
             .forEach(task => {
                 const completedSessions = sessionHistory.filter(session => session.taskId === task.id).length;
                 const taskItem = document.createElement('div');
-                taskItem.classList.add('task-item');
+                taskItem.classList.add('task-item', `priority-${task.priority}`);
                 taskItem.innerHTML = `
                     <span>${task.name} - ${formatTime(task.timeSpent)} - Sessions: ${completedSessions}</span>
                     <button class="select-task" data-id="${task.id}">Select</button>
@@ -161,6 +166,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
+    }
+
+    function priorityToValue(priority) {
+        if (priority === 'high') return 3;
+        if (priority === 'medium') return 2;
+        return 1;
     }
 
     function startTimer() {
@@ -271,6 +282,27 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         sessionHistory.push(session);
         saveSessionHistory();
+    }
+
+    function exportSessionData() {
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Task Name,Session Type,Duration (minutes),Date\n";
+
+        sessionHistory.forEach(session => {
+            const task = tasks.find(t => t.id === session.taskId) || { name: session.type === 'short' ? 'Short Break' : 'Long Break' };
+            const sessionTypeLabel = session.type === 'work' ? 'Work Session' : session.type === 'short' ? 'Short Break' : 'Long Break';
+            const durationMinutes = session.duration / 60;
+            const date = new Date(session.timestamp).toLocaleString();
+            csvContent += `${task.name},${sessionTypeLabel},${durationMinutes},${date}\n`;
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', 'session_data.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
     function saveSettings() {

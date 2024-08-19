@@ -223,6 +223,18 @@ main {
     gap: 5px;
 }
 
+.priority-low {
+    border-left: 5px solid green;
+}
+
+.priority-medium {
+    border-left: 5px solid orange;
+}
+
+.priority-high {
+    border-left: 5px solid red;
+}
+
 .history-item span {
     font-weight: bold;
     color: var(--equals-key-text);

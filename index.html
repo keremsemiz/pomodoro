@@ -29,8 +29,13 @@
             </div>
             <form id="task-form">
                 <input type="text" id="task-name" placeholder="Enter task name" required>
+                <select id="task-priority">
+                    <option value="low">Low Priority</option>
+                    <option value="medium">Medium Priority</option>
+                    <option value="high">High Priority</option>
+                </select>
                 <button type="submit">Add Task</button>
-            </form>
+            </form>            
         </section>
         
         <section id="pomodoro-history">
@@ -52,6 +57,8 @@
         <div id="timer-mode">Work Mode</div>
     </main>
     
+    <button id="export-csv">Export Session Data as CSV</button>
+
     <section id="settings">
         <h2>Timer Settings</h2>
         <form id="settings-form">
