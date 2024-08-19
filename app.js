@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let projects = JSON.parse(localStorage.getItem('projects')) || ['Default Project'];
     let selectedProject = projects[0];
     let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    let sessionHistory = JSON.parse(localStorage.getItem('sessionHistory')) || [];
     let timerInterval;
     let timerMinutes = 25;
     let timerSeconds = 0;
@@ -90,10 +91,11 @@ document.addEventListener('DOMContentLoaded', () => {
         tasks
             .filter(task => task.project === selectedProject)
             .forEach(task => {
+                const completedSessions = sessionHistory.filter(session => session.taskId === task.id).length;
                 const taskItem = document.createElement('div');
                 taskItem.classList.add('task-item');
                 taskItem.innerHTML = `
-                    <span>${task.name} - ${formatTime(task.timeSpent)}</span>
+                    <span>${task.name} - ${formatTime(task.timeSpent)} - Sessions: ${completedSessions}</span>
                     <button class="select-task" data-id="${task.id}">Select</button>
                     <button class="edit-task" data-id="${task.id}">Edit</button>
                     <button class="delete-task" data-id="${task.id}">Delete</button>
@@ -136,8 +138,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         clearInterval(timerInterval);
                         timerInterval = null;
                         alert('Pomodoro session completed!');
-                        activeTask.timeSpent += 1500; // 25 minutes * 60 seconds
+                        activeTask.timeSpent += 1500;
                         saveTasks();
+                        logSession(activeTask.id);
                         renderTasks();
                     } else {
                         timerMinutes--;
@@ -179,6 +182,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${hours}h ${remainingMinutes}m`;
     }
 
+    function logSession(taskId) {
+        const session = {
+            taskId,
+            timestamp: new Date().toISOString(),
+            duration: 1500 
+        };
+        sessionHistory.push(session);
+        saveSessionHistory();
+    }
+
     function saveProjects() {
         localStorage.setItem('projects', JSON.stringify(projects));
     }
@@ -187,7 +200,26 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('tasks', JSON.stringify(tasks));
     }
 
+    function saveSessionHistory() {
+        localStorage.setItem('sessionHistory', JSON.stringify(sessionHistory));
+    }
+
+    function renderHistory() {
+        const historyList = document.getElementById('history-list');
+        historyList.innerHTML = '';
+        sessionHistory.forEach(session => {
+            const task = tasks.find(t => t.id === session.taskId);
+            const historyItem = document.createElement('div');
+            historyItem.classList.add('history-item');
+            historyItem.innerHTML = `
+                <span>${task.name} - ${formatTime(session.duration)} - ${new Date(session.timestamp).toLocaleString()}</span>
+            `;
+            historyList.appendChild(historyItem);
+        });
+    }
+
     renderProjects();
     renderTasks();
+    renderHistory();
     updateTimerDisplay();
 });

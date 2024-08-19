@@ -128,6 +128,24 @@ main {
     margin-right: 10px;
 }
 
+#pomodoro-history {
+    background-color: var(--keypad-bg);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+}
+
+.history-item {
+    padding: 10px;
+    border-bottom: 1px solid var(--function-key-shadow);
+    color: var(--display-text);
+}
+
+.history-item:last-child {
+    border-bottom: none;
+}
+
+
 .task-item .select-task {
     background-color: var(--equals-key-bg);
 }
