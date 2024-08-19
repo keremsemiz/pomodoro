@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const workDurationInput = document.getElementById('work-duration');
     const shortBreakDurationInput = document.getElementById('short-break-duration');
     const longBreakDurationInput = document.getElementById('long-break-duration');
+    const timerModeDisplay = document.getElementById('timer-mode');
 
     let projects = JSON.parse(localStorage.getItem('projects')) || ['Default Project'];
     let selectedProject = projects[0];
@@ -31,6 +32,14 @@ document.addEventListener('DOMContentLoaded', () => {
     workDurationInput.value = workDuration;
     shortBreakDurationInput.value = shortBreakMinutes;
     longBreakDurationInput.value = longBreakMinutes;
+
+    if (Notification.permission === 'default') {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                console.log('Notification permission granted.');
+            }
+        });
+    }
 
     settingsForm.addEventListener('submit', (event) => {
         event.preventDefault();
@@ -156,12 +165,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function startTimer() {
         if (!timerInterval && activeTask) {
+            updateTimerModeDisplay();
             timerInterval = setInterval(() => {
                 if (timerSeconds === 0) {
                     if (timerMinutes === 0) {
                         clearInterval(timerInterval);
                         timerInterval = null;
                         if (!isBreak) {
+                            notifyUser('Pomodoro Completed', 'Good job! Time for a break.');
                             alert('Pomodoro session completed!');
                             activeTask.timeSpent += workDuration * 60;
                             saveTasks();
@@ -173,6 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 startBreak(shortBreakMinutes, 'short');
                             }
                         } else {
+                            notifyUser('Break Over', 'Time to get back to work!');
                             alert('Break time over!');
                             isBreak = false;
                             resetTimer();
@@ -195,6 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.classList.add('break-mode');
         timerMinutes = minutes;
         timerSeconds = 0;
+        updateTimerModeDisplay();
         updateTimerDisplay();
         logSession(null, type);
         startTimer();
@@ -213,6 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
         timerMinutes = workDuration;
         timerSeconds = 0;
         document.body.classList.remove('break-mode');
+        updateTimerModeDisplay();
         updateTimerDisplay();
     }
 
@@ -224,6 +238,20 @@ document.addEventListener('DOMContentLoaded', () => {
             timerDisplay.style.color = 'hsl(0, 0%, 100%)';
         } else {
             timerDisplay.style.color = 'var(--display-text)';
+        }
+    }
+
+    function updateTimerModeDisplay() {
+        if (isBreak) {
+            timerModeDisplay.textContent = 'Break Mode';
+        } else {
+            timerModeDisplay.textContent = 'Work Mode';
+        }
+    }
+
+    function notifyUser(title, message) {
+        if (Notification.permission === 'granted') {
+            new Notification(title, { body: message });
         }
     }
 
@@ -273,6 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
             historyItem.classList.add('history-item');
             historyItem.innerHTML = `
                 <span>${task.name} - ${sessionTypeLabel} - ${formatTime(session.duration)} - ${new Date(session.timestamp).toLocaleString()}</span>
+                <div>Task ID: ${session.taskId || 'N/A'}, Duration: ${session.duration / 60} minutes</div>
             `;
             historyList.appendChild(historyItem);
         });

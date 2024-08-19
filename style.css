@@ -207,10 +207,30 @@ main {
     padding: 15px;
 }
 
+#timer-mode {
+    font-size: 1.2rem;
+    margin-top: 10px;
+    color: var(--display-text);
+}
+
 .history-item {
     padding: 10px;
     border-bottom: 1px solid var(--function-key-shadow);
     color: var(--display-text);
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.history-item span {
+    font-weight: bold;
+    color: var(--equals-key-text);
+}
+
+.history-item div {
+    font-size: 0.9rem;
+    color: var(--number-key-text);
 }
 
 .history-item:last-child {
