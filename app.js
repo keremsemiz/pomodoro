@@ -17,6 +17,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let timerMinutes = 25;
     let timerSeconds = 0;
     let activeTask = null;
+    let isBreak = false;
+    let shortBreakMinutes = 5;
+    let longBreakMinutes = 15;
+    let completedSessions = 0;
 
     taskForm.addEventListener('submit', (event) => {
         event.preventDefault();
@@ -137,10 +141,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (timerMinutes === 0) {
                         clearInterval(timerInterval);
                         timerInterval = null;
-                        alert('Pomodoro session completed!');
-                        activeTask.timeSpent += 1500;
-                        saveTasks();
-                        logSession(activeTask.id);
+                        if (!isBreak) {
+                            alert('Pomodoro session completed!');
+                            activeTask.timeSpent += 1500; // 25 minutes * 60 seconds
+                            saveTasks();
+                            logSession(activeTask.id, 'work');
+                            completedSessions++;
+                            if (completedSessions % 4 === 0) {
+                                startBreak(longBreakMinutes, 'long');
+                            } else {
+                                startBreak(shortBreakMinutes, 'short');
+                            }
+                        } else {
+                            alert('Break time over!');
+                            isBreak = false;
+                            resetTimer();
+                        }
                         renderTasks();
                     } else {
                         timerMinutes--;
@@ -152,6 +168,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateTimerDisplay();
             }, 1000);
         }
+    }
+
+    function startBreak(minutes, type) {
+        isBreak = true;
+        document.body.classList.add('break-mode');
+        timerMinutes = minutes;
+        timerSeconds = 0;
+        updateTimerDisplay();
+        logSession(null, type);
+        startTimer();
     }
 
     function pauseTimer() {
@@ -166,6 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
         timerInterval = null;
         timerMinutes = 25;
         timerSeconds = 0;
+        document.body.classList.remove('break-mode');
         updateTimerDisplay();
     }
 
@@ -173,6 +200,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const minutes = String(timerMinutes).padStart(2, '0');
         const seconds = String(timerSeconds).padStart(2, '0');
         timerDisplay.textContent = `${minutes}:${seconds}`;
+        if (isBreak) {
+            timerDisplay.style.color = 'hsl(0, 0%, 100%)';
+        } else {
+            timerDisplay.style.color = 'var(--display-text)';
+        }
     }
 
     function formatTime(seconds) {
@@ -182,11 +214,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${hours}h ${remainingMinutes}m`;
     }
 
-    function logSession(taskId) {
+    function logSession(taskId, sessionType) {
         const session = {
             taskId,
             timestamp: new Date().toISOString(),
-            duration: 1500 
+            duration: sessionType === 'work' ? 1500 : sessionType === 'short' ? shortBreakMinutes * 60 : longBreakMinutes * 60,
+            type: sessionType
         };
         sessionHistory.push(session);
         saveSessionHistory();
@@ -208,11 +241,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const historyList = document.getElementById('history-list');
         historyList.innerHTML = '';
         sessionHistory.forEach(session => {
-            const task = tasks.find(t => t.id === session.taskId);
+            const task = tasks.find(t => t.id === session.taskId) || { name: session.type === 'short' ? 'Short Break' : 'Long Break' };
+            const sessionTypeLabel = session.type === 'work' ? 'Work Session' : session.type === 'short' ? 'Short Break' : 'Long Break';
             const historyItem = document.createElement('div');
             historyItem.classList.add('history-item');
             historyItem.innerHTML = `
-                <span>${task.name} - ${formatTime(session.duration)} - ${new Date(session.timestamp).toLocaleString()}</span>
+                <span>${task.name} - ${sessionTypeLabel} - ${formatTime(session.duration)} - ${new Date(session.timestamp).toLocaleString()}</span>
             `;
             historyList.appendChild(historyItem);
         });
