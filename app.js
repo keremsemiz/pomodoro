@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let timerInterval;
     let timerMinutes = 25;
     let timerSeconds = 0;
+    let activeTask = null;
 
     taskForm.addEventListener('submit', (event) => {
         event.preventDefault();
@@ -61,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function addTask(name) {
-        const task = { id: Date.now(), name, project: selectedProject };
+        const task = { id: Date.now(), name, project: selectedProject, timeSpent: 0 };
         tasks.push(task);
         saveTasks();
         renderTasks();
@@ -79,6 +80,11 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTasks();
     }
 
+    function selectTask(id) {
+        activeTask = tasks.find(task => task.id === id);
+        resetTimer();
+    }
+
     function renderTasks() {
         taskList.innerHTML = '';
         tasks
@@ -87,12 +93,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 const taskItem = document.createElement('div');
                 taskItem.classList.add('task-item');
                 taskItem.innerHTML = `
-                    <span>${task.name}</span>
+                    <span>${task.name} - ${formatTime(task.timeSpent)}</span>
+                    <button class="select-task" data-id="${task.id}">Select</button>
                     <button class="edit-task" data-id="${task.id}">Edit</button>
                     <button class="delete-task" data-id="${task.id}">Delete</button>
                 `;
                 taskList.appendChild(taskItem);
             });
+
+        document.querySelectorAll('.select-task').forEach(button => {
+            button.addEventListener('click', (event) => {
+                const id = parseInt(event.target.getAttribute('data-id'));
+                selectTask(id);
+            });
+        });
 
         document.querySelectorAll('.edit-task').forEach(button => {
             button.addEventListener('click', (event) => {
@@ -114,6 +128,57 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function startTimer() {
+        if (!timerInterval && activeTask) {
+            timerInterval = setInterval(() => {
+                if (timerSeconds === 0) {
+                    if (timerMinutes === 0) {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                        alert('Pomodoro session completed!');
+                        activeTask.timeSpent += 1500; // 25 minutes * 60 seconds
+                        saveTasks();
+                        renderTasks();
+                    } else {
+                        timerMinutes--;
+                        timerSeconds = 59;
+                    }
+                } else {
+                    timerSeconds--;
+                }
+                updateTimerDisplay();
+            }, 1000);
+        }
+    }
+
+    function pauseTimer() {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+    }
+
+    function resetTimer() {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        timerMinutes = 25;
+        timerSeconds = 0;
+        updateTimerDisplay();
+    }
+
+    function updateTimerDisplay() {
+        const minutes = String(timerMinutes).padStart(2, '0');
+        const seconds = String(timerSeconds).padStart(2, '0');
+        timerDisplay.textContent = `${minutes}:${seconds}`;
+    }
+
+    function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const remainingMinutes = minutes % 60;
+        return `${hours}h ${remainingMinutes}m`;
+    }
+
     function saveProjects() {
         localStorage.setItem('projects', JSON.stringify(projects));
     }
@@ -126,4 +191,3 @@ document.addEventListener('DOMContentLoaded', () => {
     renderTasks();
     updateTimerDisplay();
 });
-
