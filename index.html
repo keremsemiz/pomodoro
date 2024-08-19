@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A task manager with integrated Pomodoro timer to boost your productivity.">
+    <meta name="keywords" content="task manager, pomodoro timer, productivity, time management">
+    <meta name="author" content="Your Name">
+    <title>Task Manager with Pomodoro Timer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Task Manager with Pomodoro Timer</h1>
+        <button id="theme-switcher">Switch Theme</button>
+    </header>
+
+    <main>
+        <section id="task-manager">
+            <h2>Your Tasks</h2>
+            <div id="task-list">
+                <!-- put tasks dynamically here -->
+            </div>
+            <form id="task-form">
+                <input type="text" id="task-name" placeholder="Enter task name" required>
+                <button type="submit">Add Task</button>
+            </form>
+        </section>
+
+        <section id="pomodoro-timer">
+            <h2>Pomodoro Timer</h2>
+            <div id="timer-display">25:00</div>
+            <div id="timer-controls">
+                <button id="start-timer">Start</button>
+                <button id="pause-timer">Pause</button>
+                <button id="reset-timer">Reset</button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Task Manager with Pomodoro Timer</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
