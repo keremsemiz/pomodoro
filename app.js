@@ -8,6 +8,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const pauseTimerButton = document.getElementById('pause-timer');
     const resetTimerButton = document.getElementById('reset-timer');
     const timerDisplay = document.getElementById('timer-display');
+    const settingsForm = document.getElementById('settings-form');
+    const workDurationInput = document.getElementById('work-duration');
+    const shortBreakDurationInput = document.getElementById('short-break-duration');
+    const longBreakDurationInput = document.getElementById('long-break-duration');
 
     let projects = JSON.parse(localStorage.getItem('projects')) || ['Default Project'];
     let selectedProject = projects[0];
@@ -18,9 +22,25 @@ document.addEventListener('DOMContentLoaded', () => {
     let timerSeconds = 0;
     let activeTask = null;
     let isBreak = false;
-    let shortBreakMinutes = 5;
-    let longBreakMinutes = 15;
     let completedSessions = 0;
+
+    let workDuration = parseInt(localStorage.getItem('workDuration')) || 25;
+    let shortBreakMinutes = parseInt(localStorage.getItem('shortBreakDuration')) || 5;
+    let longBreakMinutes = parseInt(localStorage.getItem('longBreakDuration')) || 15;
+
+    workDurationInput.value = workDuration;
+    shortBreakDurationInput.value = shortBreakMinutes;
+    longBreakDurationInput.value = longBreakMinutes;
+
+    settingsForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        workDuration = parseInt(workDurationInput.value);
+        shortBreakMinutes = parseInt(shortBreakDurationInput.value);
+        longBreakMinutes = parseInt(longBreakDurationInput.value);
+        saveSettings();
+        resetTimer();
+        alert('Settings saved!');
+    });
 
     taskForm.addEventListener('submit', (event) => {
         event.preventDefault();
@@ -143,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         timerInterval = null;
                         if (!isBreak) {
                             alert('Pomodoro session completed!');
-                            activeTask.timeSpent += 1500; // 25 minutes * 60 seconds
+                            activeTask.timeSpent += workDuration * 60;
                             saveTasks();
                             logSession(activeTask.id, 'work');
                             completedSessions++;
@@ -190,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function resetTimer() {
         clearInterval(timerInterval);
         timerInterval = null;
-        timerMinutes = 25;
+        timerMinutes = workDuration;
         timerSeconds = 0;
         document.body.classList.remove('break-mode');
         updateTimerDisplay();
@@ -218,11 +238,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const session = {
             taskId,
             timestamp: new Date().toISOString(),
-            duration: sessionType === 'work' ? 1500 : sessionType === 'short' ? shortBreakMinutes * 60 : longBreakMinutes * 60,
+            duration: sessionType === 'work' ? workDuration * 60 : sessionType === 'short' ? shortBreakMinutes * 60 : longBreakMinutes * 60,
             type: sessionType
         };
         sessionHistory.push(session);
         saveSessionHistory();
+    }
+
+    function saveSettings() {
+        localStorage.setItem('workDuration', workDuration);
+        localStorage.setItem('shortBreakDuration', shortBreakMinutes);
+        localStorage.setItem('longBreakDuration', longBreakMinutes);
     }
 
     function saveProjects() {
