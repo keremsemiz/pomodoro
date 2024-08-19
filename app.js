@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const taskForm = document.getElementById('task-form');
     const taskNameInput = document.getElementById('task-name');
     const taskPrioritySelect = document.getElementById('task-priority');
+    const taskDeadlineInput = document.getElementById('task-deadline');
     const taskList = document.getElementById('task-list');
     const projectSelect = document.getElementById('project-select');
     const addProjectButton = document.getElementById('add-project');
@@ -15,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const longBreakDurationInput = document.getElementById('long-break-duration');
     const timerModeDisplay = document.getElementById('timer-mode');
     const exportCsvButton = document.getElementById('export-csv');
+    const themeSwitcherButton = document.getElementById('theme-switcher');
 
     let projects = JSON.parse(localStorage.getItem('projects')) || ['Default Project'];
     let selectedProject = projects[0];
@@ -34,6 +36,18 @@ document.addEventListener('DOMContentLoaded', () => {
     workDurationInput.value = workDuration;
     shortBreakDurationInput.value = shortBreakMinutes;
     longBreakDurationInput.value = longBreakMinutes;
+
+    // Load theme preference from localStorage
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    document.body.classList.toggle('dark-theme', currentTheme === 'dark');
+    themeSwitcherButton.textContent = currentTheme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme';
+
+    themeSwitcherButton.addEventListener('click', () => {
+        document.body.classList.toggle('dark-theme');
+        const newTheme = document.body.classList.contains('dark-theme') ? 'dark' : 'light';
+        localStorage.setItem('theme', newTheme);
+        themeSwitcherButton.textContent = newTheme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme';
+    });
 
     if (Notification.permission === 'default') {
         Notification.requestPermission().then(permission => {
@@ -56,9 +70,11 @@ document.addEventListener('DOMContentLoaded', () => {
     taskForm.addEventListener('submit', (event) => {
         event.preventDefault();
         const taskName = taskNameInput.value.trim();
+        const taskDeadline = taskDeadlineInput.value;
         if (taskName !== '') {
-            addTask(taskName);
+            addTask(taskName, taskDeadline);
             taskNameInput.value = '';
+            taskDeadlineInput.value = '';
         }
     });
 
@@ -98,16 +114,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function addTask(name) {
+    function addTask(name, deadline) {
         const priority = taskPrioritySelect.value;
-        const task = { id: Date.now(), name, project: selectedProject, priority, timeSpent: 0 };
+        const task = { id: Date.now(), name, project: selectedProject, priority, deadline, timeSpent: 0 };
         tasks.push(task);
         saveTasks();
         renderTasks();
+        checkDeadlines();
     }
 
-    function editTask(id, newName) {
-        tasks = tasks.map(task => task.id === id ? { ...task, name: newName } : task);
+    function editTask(id, newName, newDeadline) {
+        tasks = tasks.map(task => task.id === id ? { ...task, name: newName, deadline: newDeadline } : task);
         saveTasks();
         renderTasks();
     }
@@ -130,10 +147,11 @@ document.addEventListener('DOMContentLoaded', () => {
             .sort((a, b) => priorityToValue(b.priority) - priorityToValue(a.priority))
             .forEach(task => {
                 const completedSessions = sessionHistory.filter(session => session.taskId === task.id).length;
+                const deadlineText = task.deadline ? ` - Deadline: ${task.deadline}` : '';
                 const taskItem = document.createElement('div');
                 taskItem.classList.add('task-item', `priority-${task.priority}`);
                 taskItem.innerHTML = `
-                    <span>${task.name} - ${formatTime(task.timeSpent)} - Sessions: ${completedSessions}</span>
+                    <span>${task.name} - ${formatTime(task.timeSpent)} - Sessions: ${completedSessions}${deadlineText}</span>
                     <button class="select-task" data-id="${task.id}">Select</button>
                     <button class="edit-task" data-id="${task.id}">Edit</button>
                     <button class="delete-task" data-id="${task.id}">Delete</button>
@@ -151,9 +169,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.edit-task').forEach(button => {
             button.addEventListener('click', (event) => {
                 const id = parseInt(event.target.getAttribute('data-id'));
-                const newName = prompt('Edit Task Name:', tasks.find(task => task.id === id).name);
+                const task = tasks.find(task => task.id === id);
+                const newName = prompt('Edit Task Name:', task.name);
+                const newDeadline = prompt('Edit Task Deadline (YYYY-MM-DD):', task.deadline);
                 if (newName) {
-                    editTask(id, newName.trim());
+                    editTask(id, newName.trim(), newDeadline.trim());
                 }
             });
         });
@@ -166,12 +186,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
+
+        checkDeadlines();
     }
 
     function priorityToValue(priority) {
         if (priority === 'high') return 3;
         if (priority === 'medium') return 2;
         return 1;
+    }
+
+    function checkDeadlines() {
+        const now = new Date();
+        tasks.forEach(task => {
+            if (task.deadline) {
+                const deadlineDate = new Date(task.deadline);
+                const timeRemaining = deadlineDate - now;
+                if (timeRemaining < 24 * 60 * 60 * 1000 && timeRemaining > 0) { // Less than 24 hours left
+                    notifyUser('Task Deadline Approaching', `Your task "${task.name}" is due soon.`);
+                } else if (timeRemaining < 0) { // Past deadline
+                    notifyUser('Task Deadline Missed', `Your task "${task.name}" is past due.`);
+                }
+            }
+        });
     }
 
     function startTimer() {
