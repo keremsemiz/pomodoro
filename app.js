@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const taskNameInput = document.getElementById('task-name');
     const taskPrioritySelect = document.getElementById('task-priority');
     const taskDeadlineInput = document.getElementById('task-deadline');
+    const taskEstimatedTimeInput = document.getElementById('task-estimated-time');
     const taskList = document.getElementById('task-list');
     const projectSelect = document.getElementById('project-select');
     const addProjectButton = document.getElementById('add-project');
@@ -71,10 +72,12 @@ document.addEventListener('DOMContentLoaded', () => {
         event.preventDefault();
         const taskName = taskNameInput.value.trim();
         const taskDeadline = taskDeadlineInput.value;
-        if (taskName !== '') {
-            addTask(taskName, taskDeadline);
+        const estimatedTime = parseInt(taskEstimatedTimeInput.value) * 3600; // Convert hours to seconds
+        if (taskName !== '' && estimatedTime > 0) {
+            addTask(taskName, taskDeadline, estimatedTime);
             taskNameInput.value = '';
             taskDeadlineInput.value = '';
+            taskEstimatedTimeInput.value = '';
         }
     });
 
@@ -114,17 +117,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function addTask(name, deadline) {
+    function addTask(name, deadline, estimatedTime) {
         const priority = taskPrioritySelect.value;
-        const task = { id: Date.now(), name, project: selectedProject, priority, deadline, timeSpent: 0 };
+        const task = { id: Date.now(), name, project: selectedProject, priority, deadline, estimatedTime, timeSpent: 0 };
         tasks.push(task);
         saveTasks();
         renderTasks();
         checkDeadlines();
     }
 
-    function editTask(id, newName, newDeadline) {
-        tasks = tasks.map(task => task.id === id ? { ...task, name: newName, deadline: newDeadline } : task);
+    function editTask(id, newName, newDeadline, newEstimatedTime) {
+        tasks = tasks.map(task => task.id === id ? { ...task, name: newName, deadline: newDeadline, estimatedTime: newEstimatedTime } : task);
         saveTasks();
         renderTasks();
     }
@@ -148,10 +151,12 @@ document.addEventListener('DOMContentLoaded', () => {
             .forEach(task => {
                 const completedSessions = sessionHistory.filter(session => session.taskId === task.id).length;
                 const deadlineText = task.deadline ? ` - Deadline: ${task.deadline}` : '';
+                const progress = (task.timeSpent / task.estimatedTime) * 100;
                 const taskItem = document.createElement('div');
                 taskItem.classList.add('task-item', `priority-${task.priority}`);
                 taskItem.innerHTML = `
                     <span>${task.name} - ${formatTime(task.timeSpent)} - Sessions: ${completedSessions}${deadlineText}</span>
+                    <div class="progress-bar" style="width: ${progress}%;"></div>
                     <button class="select-task" data-id="${task.id}">Select</button>
                     <button class="edit-task" data-id="${task.id}">Edit</button>
                     <button class="delete-task" data-id="${task.id}">Delete</button>
@@ -172,8 +177,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const task = tasks.find(task => task.id === id);
                 const newName = prompt('Edit Task Name:', task.name);
                 const newDeadline = prompt('Edit Task Deadline (YYYY-MM-DD):', task.deadline);
-                if (newName) {
-                    editTask(id, newName.trim(), newDeadline.trim());
+                const newEstimatedTime = prompt('Edit Estimated Time (hours):', task.estimatedTime / 3600); // Convert seconds to hours
+                if (newName && newEstimatedTime > 0) {
+                    editTask(id, newName.trim(), newDeadline.trim(), parseInt(newEstimatedTime) * 3600); // Convert hours to seconds
                 }
             });
         });
@@ -220,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         clearInterval(timerInterval);
                         timerInterval = null;
                         if (!isBreak) {
-                            notifyUser('Pomodoro Completed', 'Good job! Time for a break.');
+                            notifyUser('Pomodoro Completed', `Good job! You've completed a session for "${activeTask.name}".`);
                             alert('Pomodoro session completed!');
                             activeTask.timeSpent += workDuration * 60;
                             saveTasks();

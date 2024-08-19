@@ -90,6 +90,28 @@ main {
     max-width: 100%;
 }
 
+.task-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid var(--function-key-shadow);
+    margin-bottom: 10px;
+    background-color: var(--number-key-bg);
+    color: var(--number-key-text);
+    position: relative;
+}
+
+.progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 5px;
+    background-color: var(--equals-key-bg);
+    border-radius: 0 0 4px 4px;
+}
+
 #timer-controls {
     display: flex;
     justify-content: center;
