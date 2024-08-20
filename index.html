@@ -7,12 +7,12 @@
     <meta name="keywords" content="task manager, pomodoro timer, productivity, time management">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <meta name="author" content="Your Name">
-    <title>pomodoro</title>
+    <title>Task Manager with Pomodoro Timer</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header>
-        <h1>pomodoro</h1>
+        <h1>Task Manager with Pomodoro Timer</h1>
         <button id="theme-switcher">Switch Theme</button>
     </header>
 
@@ -33,10 +33,14 @@
                 </select>
                 <input type="date" id="task-deadline" placeholder="Set deadline">
                 <input type="number" id="task-estimated-time" placeholder="Estimated Time (hours)" min="1">
-                <select id="task-dependencies" multiple>
-                </select>
+                <select id="task-dependencies" multiple></select>
                 <button type="submit">Add Task</button>
-            </form>                      
+            </form>
+        </section>
+
+        <section id="pomodoro-history">
+            <h2>Pomodoro Session History</h2>
+            <div id="history-list"></div>
         </section>
 
         <section id="pomodoro-timer">
@@ -47,42 +51,41 @@
                 <button id="pause-timer">Pause</button>
                 <button id="reset-timer">Reset</button>
             </div>
-            <div id="timer-mode">Work Mode</div>
         </section>
-
-        <section id="pomodoro-history">
-            <h2>Pomodoro Session History</h2>
-            <div id="history-list"></div>
-        </section>
-
-        <button id="export-csv">Export Session Data as CSV</button>
-
-        <section id="analytics-dashboard">
-            <h2>Analytics Dashboard</h2>
-            <div id="chart-container">
-                <canvas id="time-spent-chart"></canvas>
-            </div>
-            <div id="stats-summary">
-                <p id="total-time">Total Time Spent: 0h 0m</p>
-                <p id="average-session">Average Session Length: 0m</p>
-                <p id="completion-rate">Task Completion Rate: 0%</p>
-            </div>
-        </section>
-
-        <section id="settings">
-            <h2>Timer Settings</h2>
-            <form id="settings-form">
-                <label for="work-duration">Work Duration (minutes):</label>
-                <input type="number" id="work-duration" value="25" min="1" required>
-                <label for="short-break-duration">Short Break Duration (minutes):</label>
-                <input type="number" id="short-break-duration" value="5" min="1" required>
-                <label for="long-break-duration">Long Break Duration (minutes):</label>
-                <input type="number" id="long-break-duration" value="15" min="1" required>
-                <button type="submit">Save Settings</button>
-            </form>
-        </section>
+        <div id="timer-mode">Work Mode</div>
     </main>
+    
+    <button id="export-csv">Export Session Data as CSV</button>
+
+    <section id="analytics-dashboard">
+        <h2>Analytics Dashboard</h2>
+        <div id="chart-container">
+            <canvas id="time-spent-chart"></canvas>
+        </div>
+        <div id="stats-summary">
+            <p id="total-time">Total Time Spent: 0h 0m</p>
+            <p id="average-session">Average Session Length: 0m</p>
+            <p id="completion-rate">Task Completion Rate: 0%</p>
+        </div>
+    </section>
+
+    <section id="settings">
+        <h2>Timer Settings</h2>
+        <form id="settings-form">
+            <label for="work-duration">Work Duration (minutes):</label>
+            <input type="number" id="work-duration" value="25" min="1" required>
+    
+            <label for="short-break-duration">Short Break Duration (minutes):</label>
+            <input type="number" id="short-break-duration" value="5" min="1" required>
+    
+            <label for="long-break-duration">Long Break Duration (minutes):</label>
+            <input type="number" id="long-break-duration" value="15" min="1" required>
+    
+            <button type="submit">Save Settings</button>
+        </form>
+    </section>
 
     <script src="app.js"></script>
+    <script src="chart.js"></script>
 </body>
 </html>

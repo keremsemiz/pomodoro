@@ -39,7 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
     shortBreakDurationInput.value = shortBreakMinutes;
     longBreakDurationInput.value = longBreakMinutes;
 
-    // Load theme preference from localStorage
     const currentTheme = localStorage.getItem('theme') || 'light';
     document.body.classList.toggle('dark-theme', currentTheme === 'dark');
     themeSwitcherButton.textContent = currentTheme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme';
@@ -51,13 +50,24 @@ document.addEventListener('DOMContentLoaded', () => {
         themeSwitcherButton.textContent = newTheme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme';
     });
 
-    if (Notification.permission === 'default') {
-        Notification.requestPermission().then(permission => {
-            if (permission === 'granted') {
-                console.log('Notification permission granted.');
-            }
-        });
-    }
+    document.addEventListener('keydown', (event) => {
+        switch (event.key) {
+            case 's':
+                startTimer();
+                break;
+            case 'p':
+                pauseTimer();
+                break;
+            case 'r':
+                resetTimer();
+                break;
+            case 'a':
+                taskNameInput.focus();
+                break;
+            default:
+                break;
+        }
+    });
 
     settingsForm.addEventListener('submit', (event) => {
         event.preventDefault();
@@ -66,23 +76,23 @@ document.addEventListener('DOMContentLoaded', () => {
         longBreakMinutes = parseInt(longBreakDurationInput.value);
         saveSettings();
         resetTimer();
-        alert('Settings saved!');
+        showFeedback('Settings saved!', 'success');
     });
 
     taskForm.addEventListener('submit', (event) => {
         event.preventDefault();
         const taskName = taskNameInput.value.trim();
         const taskDeadline = taskDeadlineInput.value;
-        const estimatedTime = parseInt(taskEstimatedTimeInput.value) * 3600; // Convert hours to seconds
+        const estimatedTime = parseInt(taskEstimatedTimeInput.value) * 3600;
         const dependencies = Array.from(taskDependenciesSelect.selectedOptions).map(option => parseInt(option.value));
         if (taskName !== '' && estimatedTime > 0) {
             addTask(taskName, taskDeadline, estimatedTime, dependencies);
             taskNameInput.value = '';
             taskDeadlineInput.value = '';
             taskEstimatedTimeInput.value = '';
-            taskDependenciesSelect.innerHTML = ''; // Clear dependencies
-            renderTasks();
-            populateTaskDependencies();
+            taskDependenciesSelect.innerHTML = '';
+            taskNameInput.focus();
+            showFeedback('Task added successfully!', 'success');
         }
     });
 
@@ -188,11 +198,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const task = tasks.find(task => task.id === id);
                 const newName = prompt('Edit Task Name:', task.name);
                 const newDeadline = prompt('Edit Task Deadline (YYYY-MM-DD):', task.deadline);
-                const newEstimatedTime = prompt('Edit Estimated Time (hours):', task.estimatedTime / 3600); // Convert seconds to hours
+                const newEstimatedTime = prompt('Edit Estimated Time (hours):', task.estimatedTime / 3600);
                 const newDependencies = prompt('Edit Dependencies (comma-separated task IDs):', task.dependencies.join(', '));
                 if (newName && newEstimatedTime > 0) {
                     const parsedDependencies = newDependencies.split(',').map(dep => parseInt(dep.trim())).filter(dep => !isNaN(dep));
-                    editTask(id, newName.trim(), newDeadline.trim(), parseInt(newEstimatedTime) * 3600, parsedDependencies); // Convert hours to seconds
+                    editTask(id, newName.trim(), newDeadline.trim(), parseInt(newEstimatedTime) * 3600, parsedDependencies);
                 }
             });
         });
@@ -234,9 +244,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (task.deadline) {
                 const deadlineDate = new Date(task.deadline);
                 const timeRemaining = deadlineDate - now;
-                if (timeRemaining < 24 * 60 * 60 * 1000 && timeRemaining > 0) { // Less than 24 hours left
+                if (timeRemaining < 24 * 60 * 60 * 1000 && timeRemaining > 0) {
                     notifyUser('Task Deadline Approaching', `Your task "${task.name}" is due soon.`);
-                } else if (timeRemaining < 0) { // Past deadline
+                } else if (timeRemaining < 0) {
                     notifyUser('Task Deadline Missed', `Your task "${task.name}" is past due.`);
                 }
             }
@@ -425,6 +435,16 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             historyList.appendChild(historyItem);
         });
+    }
+
+    function showFeedback(message, type) {
+        const feedback = document.createElement('div');
+        feedback.className = `feedback feedback-${type}`;
+        feedback.textContent = message;
+        document.body.appendChild(feedback);
+        setTimeout(() => {
+            document.body.removeChild(feedback);
+        }, 2000);
     }
 
     renderProjects();
