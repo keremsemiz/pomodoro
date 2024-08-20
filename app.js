@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const taskPrioritySelect = document.getElementById('task-priority');
     const taskDeadlineInput = document.getElementById('task-deadline');
     const taskEstimatedTimeInput = document.getElementById('task-estimated-time');
+    const taskDependenciesSelect = document.getElementById('task-dependencies');
     const taskList = document.getElementById('task-list');
     const projectSelect = document.getElementById('project-select');
     const addProjectButton = document.getElementById('add-project');
@@ -73,11 +74,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const taskName = taskNameInput.value.trim();
         const taskDeadline = taskDeadlineInput.value;
         const estimatedTime = parseInt(taskEstimatedTimeInput.value) * 3600; // Convert hours to seconds
+        const dependencies = Array.from(taskDependenciesSelect.selectedOptions).map(option => parseInt(option.value));
         if (taskName !== '' && estimatedTime > 0) {
-            addTask(taskName, taskDeadline, estimatedTime);
+            addTask(taskName, taskDeadline, estimatedTime, dependencies);
             taskNameInput.value = '';
             taskDeadlineInput.value = '';
             taskEstimatedTimeInput.value = '';
+            taskDependenciesSelect.innerHTML = ''; // Clear dependencies
+            renderTasks();
+            populateTaskDependencies();
         }
     });
 
@@ -91,6 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
     projectSelect.addEventListener('change', (event) => {
         selectedProject = event.target.value;
         renderTasks();
+        populateTaskDependencies();
     });
 
     startTimerButton.addEventListener('click', startTimer);
@@ -102,6 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
         projects.push(name);
         saveProjects();
         renderProjects();
+        populateTaskDependencies();
     }
 
     function renderProjects() {
@@ -117,17 +124,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function addTask(name, deadline, estimatedTime) {
+    function addTask(name, deadline, estimatedTime, dependencies) {
         const priority = taskPrioritySelect.value;
-        const task = { id: Date.now(), name, project: selectedProject, priority, deadline, estimatedTime, timeSpent: 0 };
+        const task = { id: Date.now(), name, project: selectedProject, priority, deadline, estimatedTime, dependencies, timeSpent: 0, completed: false };
         tasks.push(task);
         saveTasks();
         renderTasks();
         checkDeadlines();
     }
 
-    function editTask(id, newName, newDeadline, newEstimatedTime) {
-        tasks = tasks.map(task => task.id === id ? { ...task, name: newName, deadline: newDeadline, estimatedTime: newEstimatedTime } : task);
+    function editTask(id, newName, newDeadline, newEstimatedTime, newDependencies) {
+        tasks = tasks.map(task => task.id === id ? { ...task, name: newName, deadline: newDeadline, estimatedTime: newEstimatedTime, dependencies: newDependencies } : task);
         saveTasks();
         renderTasks();
     }
@@ -136,6 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tasks = tasks.filter(task => task.id !== id);
         saveTasks();
         renderTasks();
+        populateTaskDependencies();
     }
 
     function selectTask(id) {
@@ -154,6 +162,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const progress = (task.timeSpent / task.estimatedTime) * 100;
                 const taskItem = document.createElement('div');
                 taskItem.classList.add('task-item', `priority-${task.priority}`);
+                if (task.completed) {
+                    taskItem.classList.add('completed-task');
+                }
                 taskItem.innerHTML = `
                     <span>${task.name} - ${formatTime(task.timeSpent)} - Sessions: ${completedSessions}${deadlineText}</span>
                     <div class="progress-bar" style="width: ${progress}%;"></div>
@@ -178,8 +189,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const newName = prompt('Edit Task Name:', task.name);
                 const newDeadline = prompt('Edit Task Deadline (YYYY-MM-DD):', task.deadline);
                 const newEstimatedTime = prompt('Edit Estimated Time (hours):', task.estimatedTime / 3600); // Convert seconds to hours
+                const newDependencies = prompt('Edit Dependencies (comma-separated task IDs):', task.dependencies.join(', '));
                 if (newName && newEstimatedTime > 0) {
-                    editTask(id, newName.trim(), newDeadline.trim(), parseInt(newEstimatedTime) * 3600); // Convert hours to seconds
+                    const parsedDependencies = newDependencies.split(',').map(dep => parseInt(dep.trim())).filter(dep => !isNaN(dep));
+                    editTask(id, newName.trim(), newDeadline.trim(), parseInt(newEstimatedTime) * 3600, parsedDependencies); // Convert hours to seconds
                 }
             });
         });
@@ -194,12 +207,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         checkDeadlines();
+        checkTaskCompletion();
     }
 
     function priorityToValue(priority) {
         if (priority === 'high') return 3;
         if (priority === 'medium') return 2;
         return 1;
+    }
+
+    function populateTaskDependencies() {
+        taskDependenciesSelect.innerHTML = '';
+        tasks
+            .filter(task => task.project === selectedProject)
+            .forEach(task => {
+                const option = document.createElement('option');
+                option.value = task.id;
+                option.textContent = task.name;
+                taskDependenciesSelect.appendChild(option);
+            });
     }
 
     function checkDeadlines() {
@@ -217,8 +243,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function checkTaskCompletion() {
+        tasks.forEach(task => {
+            const dependenciesCompleted = task.dependencies.every(depId => {
+                const dependentTask = tasks.find(t => t.id === depId);
+                return dependentTask && dependentTask.completed;
+            });
+
+            if (dependenciesCompleted && task.timeSpent >= task.estimatedTime) {
+                task.completed = true;
+                notifyUser('Task Completed', `Your task "${task.name}" has been automatically marked as completed.`);
+            }
+        });
+        saveTasks();
+        renderTasks();
+    }
+
     function startTimer() {
-        if (!timerInterval && activeTask) {
+        if (!timerInterval && activeTask && !activeTask.completed) {
             updateTimerModeDisplay();
             timerInterval = setInterval(() => {
                 if (timerSeconds === 0) {
@@ -244,6 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             resetTimer();
                         }
                         renderTasks();
+                        checkTaskCompletion();
                     } else {
                         timerMinutes--;
                         timerSeconds = 59;
@@ -253,6 +296,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 updateTimerDisplay();
             }, 1000);
+        } else if (activeTask && activeTask.completed) {
+            notifyUser('Task Already Completed', `The task "${activeTask.name}" is already completed and cannot be worked on further.`);
         }
     }
 
@@ -385,5 +430,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderProjects();
     renderTasks();
     renderHistory();
+    populateTaskDependencies();
     updateTimerDisplay();
 });
